@@ -1,5 +1,6 @@
 pub mod state;
 mod terminal;
+pub mod kimi_import;
 
 #[cfg(feature = "tauri")]
 pub mod commands;
@@ -46,6 +47,7 @@ pub fn run() {
             commands::delete_project,
             commands::record_session,
             commands::open_kimi,
+            commands::import_kimi_projects,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

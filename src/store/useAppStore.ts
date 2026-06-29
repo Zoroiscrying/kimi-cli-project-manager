@@ -17,6 +17,7 @@ interface AppStore extends AppState {
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   openKimi: (project: Project) => Promise<void>;
+  importKimiProjects: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -82,6 +83,15 @@ export const useAppStore = create<AppStore>((set) => ({
         command: 'kimi',
       };
       const state = await invoke<AppState>('record_session', { session });
+      set({ ...state, error: null });
+    } catch (err) {
+      set({ error: toErrorMessage(err) });
+    }
+  },
+
+  importKimiProjects: async () => {
+    try {
+      const state = await invoke<AppState>('import_kimi_projects');
       set({ ...state, error: null });
     } catch (err) {
       set({ error: toErrorMessage(err) });

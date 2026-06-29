@@ -18,6 +18,7 @@ function App() {
     updateProject,
     deleteProject,
     openKimi,
+    importKimiProjects,
     clearError,
   } = useAppStore();
 
@@ -58,12 +59,18 @@ function App() {
             onDelete={handleDelete}
           />
         </div>
-        <div className="shrink-0 border-t border-neutral-800 p-4">
+        <div className="shrink-0 space-y-2 border-t border-neutral-800 p-4">
           <button
             onClick={() => setIsAddOpen(true)}
             className="w-full rounded-md bg-blue-700 py-2 text-sm font-medium text-white hover:bg-blue-600"
           >
             + Add Project
+          </button>
+          <button
+            onClick={() => importKimiProjects()}
+            className="w-full rounded-md border border-neutral-700 bg-neutral-800 py-2 text-sm font-medium text-neutral-200 hover:bg-neutral-700"
+          >
+            Import from Kimi
           </button>
         </div>
       </div>

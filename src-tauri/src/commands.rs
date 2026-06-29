@@ -1,7 +1,8 @@
 use crate::state::{AppState, Project, Session};
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 pub struct AppStateWrapper {
     pub state: Mutex<AppState>,
@@ -83,3 +84,58 @@ pub fn record_session(
 pub fn open_kimi(project_path: String) -> Result<(), String> {
     crate::terminal::open_kimi_in_terminal(&project_path)
 }
+
+#[tauri::command]
+pub fn import_kimi_projects(
+    state: State<'_, AppStateWrapper>,
+    app_handle: AppHandle,
+) -> Result<AppState, String> {
+    let home = app_handle
+        .path()
+        .home_dir()
+        .map_err(|e| format!("failed to resolve home dir: {e}"))?;
+    let kimi_dir = home.join(".kimi-code");
+    let index_path = kimi_dir.join("session_index.jsonl");
+
+    let content = std::fs::read_to_string(&index_path).map_err(|e| {
+        format!(
+            "failed to read Kimi session index at {}: {e}",
+            index_path.display()
+        )
+    })?;
+
+    let work_dirs = crate::kimi_import::parse_kimi_work_dirs(&content, &kimi_dir);
+
+    {
+        let mut guard = state.state.lock().map_err(|e| e.to_string())?;
+        let existing_paths: HashSet<String> =
+            guard.projects.iter().map(|p| p.path.clone()).collect();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        for path in work_dirs {
+            let path_str = path.to_string_lossy().to_string();
+            if existing_paths.contains(&path_str) {
+                continue;
+            }
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("Imported Project")
+                .to_string();
+            guard.projects.push(Project {
+                id: uuid::Uuid::new_v4().to_string(),
+                name,
+                path: path_str,
+                description: Some("Imported from Kimi CLI history".to_string()),
+                tags: None,
+                created_at: now.clone(),
+                updated_at: now.clone(),
+            });
+        }
+    }
+
+    state.save()?;
+    get_state(state)
+}
+
+
