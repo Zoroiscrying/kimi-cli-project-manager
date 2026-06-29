@@ -1,6 +1,7 @@
 use portable_pty::{MasterPty, NativePtySystem, PtySize, PtySystem};
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -39,18 +40,33 @@ impl PtyManager {
             })
             .map_err(|e| e.to_string())?;
 
+        let kimi_session = home_dir()
+            .and_then(|home| {
+                let index_path = home.join(".kimi-code").join("session_index.jsonl");
+                let content = std::fs::read_to_string(&index_path).ok()?;
+                crate::kimi_import::find_latest_kimi_session(&content, &cwd)
+            });
+
         let mut cmd = if cfg!(target_os = "windows") {
             let mut c = portable_pty::CommandBuilder::new("cmd.exe");
             c.arg("/k");
-            c.arg(format!("cd /d {}", cwd));
+            let inner = match kimi_session {
+                Some(id) => format!("cd /d \"{}\" && kimi -S {}", cwd, id),
+                None => format!("cd /d \"{}\" && kimi", cwd),
+            };
+            c.arg(inner);
             c
         } else {
             let mut c = portable_pty::CommandBuilder::new("bash");
-            c.arg("-l");
-            c.env("PWD", &cwd);
+            c.arg("-lc");
+            let inner = match kimi_session {
+                Some(id) => format!("cd '{}' && kimi -S {}", cwd, id),
+                None => format!("cd '{}' && kimi", cwd),
+            };
+            c.arg(inner);
             c
         };
-        cmd.cwd(cwd);
+        cmd.cwd(&cwd);
 
         let mut child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
         let master = pair.master;
@@ -127,5 +143,13 @@ impl PtyManager {
 impl Default for PtyManager {
     fn default() -> Self {
         Self::new().expect("failed to create pty manager")
+    }
+}
+
+fn home_dir() -> Option<PathBuf> {
+    if cfg!(target_os = "windows") {
+        std::env::var("USERPROFILE").ok().map(PathBuf::from)
+    } else {
+        std::env::var("HOME").ok().map(PathBuf::from)
     }
 }

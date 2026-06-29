@@ -29,6 +29,38 @@ pub fn parse_kimi_work_dirs(content: &str, kimi_dir: &PathBuf) -> HashSet<PathBu
     work_dirs
 }
 
+/// Find the most recent Kimi session ID whose workDir matches the target path.
+/// Session index is append-only, so the last matching line is the most recent.
+pub fn find_latest_kimi_session(content: &str, target_path: &str) -> Option<String> {
+    let target = normalize_path(target_path);
+    let mut latest: Option<String> = None;
+
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let entry: serde_json::Value = match serde_json::from_str(line) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let Some(work_dir) = entry.get("workDir").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        if normalize_path(work_dir) == target {
+            if let Some(session_id) = entry.get("sessionId").and_then(|v| v.as_str()) {
+                latest = Some(session_id.to_string());
+            }
+        }
+    }
+
+    latest
+}
+
+fn normalize_path(path: &str) -> String {
+    path.replace('\\', "/").to_lowercase()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,5 +101,26 @@ mod tests {
         let content = "{\"workDir\":\"/nonexistent/path\"}\n".to_string();
         let dirs = parse_kimi_work_dirs(&content, &kimi_dir);
         assert!(dirs.is_empty());
+    }
+
+    #[test]
+    fn test_find_latest_kimi_session_returns_most_recent_match() {
+        let target = "F:/Coding-Projects/demo";
+        let content = format!(
+            "{{\"sessionId\":\"session-old\",\"workDir\":\"{}\"}}\n{{\"sessionId\":\"session-other\",\"workDir\":\"F:/Coding-Projects/other\"}}\n{{\"sessionId\":\"session-latest\",\"workDir\":\"{}\"}}\n",
+            target.replace('/', "\\"),
+            target
+        );
+
+        assert_eq!(
+            find_latest_kimi_session(&content, target),
+            Some("session-latest".to_string())
+        );
+    }
+
+    #[test]
+    fn test_find_latest_kimi_session_returns_none_when_no_match() {
+        let content = "{\"sessionId\":\"session-1\",\"workDir\":\"F:/Coding-Projects/other\"}\n".to_string();
+        assert!(find_latest_kimi_session(&content, "F:/Coding-Projects/demo").is_none());
     }
 }
