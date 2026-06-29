@@ -31,7 +31,10 @@ pub fn run() {
         .setup(|app| {
             let path = app_state_path(app.app_handle());
             let initial = load_or_create(&path).map_err(|e| e.to_string())?;
-            app.manage(AppStateWrapper(Mutex::new(initial)));
+            app.manage(AppStateWrapper {
+                state: Mutex::new(initial),
+                state_path: path,
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
