@@ -23,28 +23,45 @@ export function ProjectList({ projects, selectedId, onSelect, onDelete }: Projec
         <SearchBox value={query} onChange={setQuery} />
       </div>
       <div className="flex-1 overflow-auto">
-        {filtered.map((project) => (
-          <div
-            key={project.id}
-            onClick={() => onSelect(project.id)}
-            className={`group relative mb-2 cursor-pointer rounded-md px-3 py-2 ${
-              selectedId === project.id ? 'bg-blue-900/40' : 'hover:bg-neutral-800'
-            }`}
-          >
-            <div className="font-medium text-neutral-100">{project.name}</div>
-            <div className="truncate text-xs text-neutral-500">{project.path}</div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(project.id);
-              }}
-              className="absolute right-2 top-2 hidden text-neutral-500 hover:text-red-400 group-hover:block"
-              aria-label={`Delete ${project.name}`}
-            >
-              ×
-            </button>
+        {filtered.length === 0 ? (
+          <div className="py-8 text-center text-sm text-neutral-500">
+            {projects.length === 0 ? 'No projects yet.' : 'No projects match your search.'}
           </div>
-        ))}
+        ) : (
+          filtered.map((project) => (
+            <div
+              key={project.id}
+              tabIndex={0}
+              role="button"
+              aria-pressed={selectedId === project.id}
+              onClick={() => onSelect(project.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect(project.id);
+                }
+              }}
+              className={`group relative mb-2 flex cursor-pointer items-start justify-between rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-600 ${
+                selectedId === project.id ? 'bg-blue-900/40' : 'hover:bg-neutral-800'
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-neutral-100">{project.name}</div>
+                <div className="truncate text-xs text-neutral-500">{project.path}</div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(project.id);
+                }}
+                className="ml-2 shrink-0 rounded p-1 text-neutral-500 hover:bg-neutral-700 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                aria-label={`Delete ${project.name}`}
+              >
+                ×
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
