@@ -1,5 +1,5 @@
 pub mod state;
-pub mod terminal;
+mod terminal;
 
 #[cfg(feature = "tauri")]
 pub mod commands;

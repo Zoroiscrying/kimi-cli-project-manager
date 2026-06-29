@@ -6,13 +6,16 @@ pub fn open_kimi_in_terminal(project_path: &str) -> Result<(), String> {
     if !path.exists() {
         return Err(format!("project path does not exist: {project_path}"));
     }
+    if !path.is_dir() {
+        return Err(format!("project path is not a directory: {project_path}"));
+    }
 
     let canonical = path.canonicalize().map_err(|e| format!("canonicalize failed: {e}"))?;
     let canonical_str = canonical.to_string_lossy().to_string();
 
     #[cfg(target_os = "windows")]
     {
-        let ps_command = format!("cd \"{}\"; kimi", canonical_str);
+        let ps_command = format!("cd '{}'; kimi", canonical_str.replace("'", "''"));
         Command::new("powershell.exe")
             .args(["-NoExit", "-Command", &ps_command])
             .spawn()
@@ -35,7 +38,7 @@ pub fn open_kimi_in_terminal(project_path: &str) -> Result<(), String> {
 
     #[cfg(target_os = "linux")]
     {
-        let script = format!("cd \"{}\" && kimi", canonical_str);
+        let script = format!("cd '{}' && kimi", canonical_str.replace("'", "'\\''"));
         Command::new("x-terminal-emulator")
             .args(["-e", "bash", "-c", &script])
             .spawn()
@@ -48,12 +51,4 @@ pub fn open_kimi_in_terminal(project_path: &str) -> Result<(), String> {
     }
 
     Ok(())
-}
-
-pub fn command_exists(name: &str) -> bool {
-    Command::new("which")
-        .arg(name)
-        .output()
-        .map(|out| out.status.success())
-        .unwrap_or(false)
 }
