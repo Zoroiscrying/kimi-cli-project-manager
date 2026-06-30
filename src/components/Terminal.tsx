@@ -6,7 +6,6 @@ import {
 } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { WebglAddon } from '@xterm/addon-webgl';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import '@xterm/xterm/css/xterm.css';
@@ -51,7 +50,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
-    const webglAddonRef = useRef<WebglAddon | null>(null);
     const sessionIdRef = useRef<string | null>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
@@ -90,18 +88,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         lineHeight: 1.2,
         theme: TERMINAL_THEME,
         scrollback: 10000,
-        allowProposedApi: true,
       });
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
-
-      try {
-        const webglAddon = new WebglAddon();
-        term.loadAddon(webglAddon);
-        webglAddonRef.current = webglAddon;
-      } catch {
-        // Fall back to DOM renderer if WebGL is unavailable
-      }
 
       term.open(containerRef.current);
       fitAddon.fit();
@@ -166,13 +155,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
           invoke('stop_terminal', { sessionId: sessionIdRef.current }).catch(() => {});
           sessionIdRef.current = null;
         }
-        webglAddonRef.current?.dispose();
-        webglAddonRef.current = null;
         term.dispose();
         terminalRef.current = null;
         fitAddonRef.current = null;
       };
-    }, [isActive, project]);
+    }, [isActive, project, onOutput]);
 
     // When the tab becomes active, refit and focus the terminal.
     useEffect(() => {
@@ -204,7 +191,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     return (
       <div
         ref={containerRef}
-        className={`h-full w-full ${isActive ? '' : 'invisible pointer-events-none'}`}
+        className={`h-full w-full ${isActive ? '' : 'hidden'}`}
       />
     );
   }
