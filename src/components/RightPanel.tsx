@@ -1,9 +1,10 @@
 import type { Project, Session } from '../types';
+import type { SessionStatus } from './StatusDot';
 
 interface RightPanelProps {
   project: Project | null;
   sessions: Session[];
-  status?: 'none' | 'idle' | 'running';
+  status?: SessionStatus | 'none';
   onOpenKimi?: () => void;
   onEdit?: () => void;
   onCollapse?: () => void;
@@ -62,16 +63,26 @@ export function RightPanel({
                 <div
                   className={`flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-medium ${
                     status === 'running'
-                      ? 'border-[#7c3aed]/30 bg-[#7c3aed]/10 text-[#d8b4fe]'
-                      : 'border-green-500/20 bg-green-500/10 text-green-300'
+                      ? 'border-white/10 bg-black text-white'
+                      : status === 'completed'
+                      ? 'border-blue-500/20 bg-blue-500/10 text-blue-300'
+                      : 'border-white/10 bg-white/10 text-[#d4c8e8]'
                   }`}
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${
-                      status === 'running' ? 'animate-pulse bg-[#c084fc]' : 'bg-green-400'
+                      status === 'running'
+                        ? 'animate-pulse bg-white'
+                        : status === 'completed'
+                        ? 'bg-blue-400'
+                        : 'bg-white/70'
                     }`}
                   />
-                  {status === 'running' ? 'Kimi 正在运行…' : 'Kimi 当前空闲'}
+                  {status === 'running'
+                    ? 'Kimi 正在运行…'
+                    : status === 'completed'
+                    ? 'Kimi 已结束'
+                    : 'Kimi 未启动'}
                 </div>
               </section>
             )}

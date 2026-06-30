@@ -140,6 +140,21 @@ impl PtyManager {
         }
         Ok(())
     }
+
+    pub fn is_running(&self, session_id: &str) -> Result<bool, String> {
+        let mut sessions = self.sessions.lock().map_err(|e| e.to_string())?;
+        let Some(session) = sessions.get_mut(session_id) else {
+            return Ok(false);
+        };
+        let running = {
+            let mut child = session.child.lock().map_err(|e| e.to_string())?;
+            matches!(child.try_wait(), Ok(None))
+        };
+        if !running {
+            sessions.remove(session_id);
+        }
+        Ok(running)
+    }
 }
 
 impl Default for PtyManager {

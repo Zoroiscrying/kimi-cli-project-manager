@@ -11,7 +11,13 @@ vi.mock('@xterm/xterm', () => ({
     writeln() {}
     clear() {}
     dispose() {}
+    focus() {}
+    scrollToBottom() {}
+    refresh() {}
     onData(_handler: (data: string) => void) {
+      return { dispose: () => {} };
+    }
+    onResize(_handler: (data: { cols: number; rows: number }) => void) {
       return { dispose: () => {} };
     }
     get rows() {

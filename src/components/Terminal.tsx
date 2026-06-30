@@ -11,6 +11,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import '@xterm/xterm/css/xterm.css';
 import type { Project } from '../types';
+import type { SessionStatus } from './StatusDot';
 
 export interface TerminalHandle {
   sendCommand: (command: string) => void;
@@ -20,7 +21,8 @@ export interface TerminalHandle {
 interface TerminalProps {
   project: Project;
   isActive: boolean;
-  onOutput?: () => void;
+  onSessionStart?: () => void;
+  onSessionStatusChange?: (status: SessionStatus) => void;
 }
 
 // Kimi-inspired purple/blue terminal palette
@@ -47,7 +49,7 @@ const TERMINAL_THEME = {
 };
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  ({ project, isActive, onOutput }, ref) => {
+  ({ project, isActive, onSessionStart, onSessionStatusChange }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
@@ -144,7 +146,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               const wasAtBottom =
                 term.buffer.active.viewportY === term.buffer.active.baseY;
               term.write(event.payload.data);
-              onOutput?.();
               if (wasAtBottom) {
                 term.scrollToBottom();
               }
@@ -154,7 +155,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
         try {
           await invoke('start_terminal', { sessionId, cwd: project.path });
+          onSessionStart?.();
         } catch (err) {
+          onSessionStatusChange?.('completed');
           if (terminalRef.current) {
             terminalRef.current.writeln(`\r\n[failed to start terminal: ${err}]`);
           }
@@ -175,7 +178,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         terminalRef.current = null;
         fitAddonRef.current = null;
       };
-    }, [isActive, project, onOutput]);
+    }, [isActive, project, onSessionStart, onSessionStatusChange]);
 
     // When the tab becomes active, refit and focus the terminal.
     useEffect(() => {
@@ -193,6 +196,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
           invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
         }
         terminalRef.current?.scrollToBottom();
+        terminalRef.current?.refresh(0, (terminalRef.current?.rows ?? 1) - 1);
         terminalRef.current?.focus();
       });
     }, [isActive]);

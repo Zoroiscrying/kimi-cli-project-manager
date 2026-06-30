@@ -55,6 +55,7 @@ pub fn run() {
             commands::write_terminal,
             commands::resize_terminal,
             commands::stop_terminal,
+            commands::is_terminal_running,
             commands::refresh_window,
         ])
         .run(tauri::generate_context!())

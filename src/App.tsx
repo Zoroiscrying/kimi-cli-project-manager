@@ -7,6 +7,7 @@ import { CommandInput } from './components/CommandInput';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import { EditProjectDialog } from './components/EditProjectDialog';
 import { Toast } from './components/Toast';
+import { StatusDot, type SessionStatus } from './components/StatusDot';
 import { useAppStore } from './store/useAppStore';
 import type { Project } from './types';
 
@@ -37,22 +38,58 @@ function App() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [lastActivityAt, setLastActivityAt] = useState<Record<string, number>>({});
+  const [sessionStatuses, setSessionStatuses] = useState<Record<string, SessionStatus>>({});
   const terminalRefs = useRef<Map<string, TerminalHandle>>(new Map());
+  const startedTabsRef = useRef<Set<string>>(new Set());
 
-  const markActive = (tabId: string) => {
-    setLastActivityAt((prev) => ({ ...prev, [tabId]: Date.now() }));
+  const setTabStatus = (tabId: string, status: SessionStatus) => {
+    setSessionStatuses((prev) => ({ ...prev, [tabId]: status }));
   };
 
-  const isTabIdle = (tabId: string) => {
-    const last = lastActivityAt[tabId];
-    if (!last) return true;
-    return Date.now() - last > 3000;
+  const removeTabStatus = (tabId: string) => {
+    setSessionStatuses((prev) => {
+      const next = { ...prev };
+      delete next[tabId];
+      return next;
+    });
+    startedTabsRef.current.delete(tabId);
+  };
+
+  const getProjectStatus = (projectId: string): SessionStatus => {
+    const projectTabs = tabs.filter((t) => t.project.id === projectId);
+    if (projectTabs.length === 0) return 'not-started';
+    if (projectTabs.some((t) => sessionStatuses[t.id] === 'running')) return 'running';
+    if (projectTabs.some((t) => sessionStatuses[t.id] === 'completed')) return 'completed';
+    return 'not-started';
   };
 
   useEffect(() => {
     loadState();
   }, [loadState]);
+
+  // Poll real process liveness for running tabs.
+  useEffect(() => {
+    if (tabs.length === 0) return;
+
+    const interval = setInterval(() => {
+      for (const tab of tabs) {
+        if (!startedTabsRef.current.has(tab.id)) continue;
+        if (sessionStatuses[tab.id] !== 'running') continue;
+        const sessionId = `term-${tab.project.id}`;
+        import('@tauri-apps/api/core')
+          .then(({ invoke }) => invoke<boolean>('is_terminal_running', { sessionId }))
+          .then((running) => {
+            if (!running) {
+              setTabStatus(tab.id, 'completed');
+              startedTabsRef.current.delete(tab.id);
+            }
+          })
+          .catch(() => {});
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [tabs, sessionStatuses]);
 
   if (!loaded) {
     return (
@@ -80,6 +117,7 @@ function App() {
     const newTab: Tab = { id: `tab-${id}-${Date.now()}`, project };
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
+    setTabStatus(newTab.id, 'not-started');
   };
 
   const handleCloseTab = async (tabId: string) => {
@@ -103,6 +141,7 @@ function App() {
       }
       return next;
     });
+    removeTabStatus(tabId);
   };
 
   const handleDeleteProject = async (id: string) => {
@@ -118,7 +157,6 @@ function App() {
 
   const handleCommandSubmit = (command: string) => {
     if (!activeTabId) return;
-    markActive(activeTabId);
     const handle = terminalRefs.current.get(activeTabId);
     handle?.sendCommand(command);
     handle?.focus();
@@ -173,6 +211,7 @@ function App() {
             onSelect={handleSelectProject}
             onDelete={handleDeleteProject}
             collapsed={leftCollapsed}
+            getStatus={getProjectStatus}
           />
         </div>
 
@@ -180,6 +219,7 @@ function App() {
           <div className="shrink-0 space-y-2 border-t border-white/5 p-3">
             <button
               onClick={() => setIsAddOpen(true)}
+              aria-label="Add Project"
               className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/20 hover:from-[#6d28d9] hover:to-[#4338ca]"
             >
               <span>+</span>
@@ -229,6 +269,7 @@ function App() {
                     : 'text-[#9c8fb8] hover:bg-white/5 hover:text-[#d4c8e8]'
                 }`}
               >
+                <StatusDot status={sessionStatuses[tab.id] ?? 'not-started'} size="sm" />
                 <span className="max-w-[140px] truncate">{tab.project.name}</span>
                 <button
                   onClick={(e) => {
@@ -271,7 +312,7 @@ function App() {
                   <div
                     key={tab.id}
                     className={`absolute inset-0 ${
-                      tab.id === activeTabId ? 'block' : 'hidden'
+                      tab.id === activeTabId ? 'visible z-10' : 'invisible z-0'
                     }`}
                   >
                     <Terminal
@@ -284,7 +325,11 @@ function App() {
                       }}
                       project={tab.project}
                       isActive={tab.id === activeTabId}
-                      onOutput={() => markActive(tab.id)}
+                      onSessionStart={() => {
+                        startedTabsRef.current.add(tab.id);
+                        setTabStatus(tab.id, 'running');
+                      }}
+                      onSessionStatusChange={(status) => setTabStatus(tab.id, status)}
                     />
                   </div>
                 ))
@@ -296,13 +341,7 @@ function App() {
                 onSubmit={handleCommandSubmit}
                 disabled={!activeProject}
                 placeholder={activeProject ? '输入命令发送到终端...' : '先选择一个项目'}
-                status={
-                  activeTabId
-                    ? isTabIdle(activeTabId)
-                      ? 'idle'
-                      : 'running'
-                    : 'none'
-                }
+                status={activeTabId ? sessionStatuses[activeTabId] ?? 'not-started' : 'none'}
               />
             </div>
           </div>
@@ -338,13 +377,7 @@ function App() {
             <RightPanel
               project={activeProject}
               sessions={sessions}
-              status={
-                activeTabId
-                  ? isTabIdle(activeTabId)
-                    ? 'idle'
-                    : 'running'
-                  : 'none'
-              }
+              status={activeTabId ? sessionStatuses[activeTabId] ?? 'not-started' : 'none'}
               onOpenKimi={() => activeProject && openKimi(activeProject)}
               onEdit={() => setIsEditOpen(true)}
               onCollapse={() => setRightCollapsed(true)}
