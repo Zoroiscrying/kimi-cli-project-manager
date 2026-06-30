@@ -20,6 +20,7 @@ export interface TerminalHandle {
 interface TerminalProps {
   project: Project;
   isActive: boolean;
+  onOutput?: () => void;
 }
 
 // Kimi-inspired purple/blue terminal palette
@@ -46,7 +47,7 @@ const TERMINAL_THEME = {
 };
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  ({ project, isActive }, ref) => {
+  ({ project, isActive, onOutput }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
@@ -142,6 +143,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
           if (!mounted) return;
           if (event.payload.data && sessionIdRef.current === sessionId && terminalRef.current) {
             terminalRef.current.write(event.payload.data);
+            onOutput?.();
           }
         });
 
