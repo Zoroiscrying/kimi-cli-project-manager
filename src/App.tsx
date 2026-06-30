@@ -36,7 +36,18 @@ function App() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [lastActivityAt, setLastActivityAt] = useState<Record<string, number>>({});
   const terminalRefs = useRef<Map<string, TerminalHandle>>(new Map());
+
+  const markActive = (tabId: string) => {
+    setLastActivityAt((prev) => ({ ...prev, [tabId]: Date.now() }));
+  };
+
+  const isTabIdle = (tabId: string) => {
+    const last = lastActivityAt[tabId];
+    if (!last) return true;
+    return Date.now() - last > 3000;
+  };
 
   useEffect(() => {
     loadState();
@@ -106,6 +117,7 @@ function App() {
 
   const handleCommandSubmit = (command: string) => {
     if (!activeTabId) return;
+    markActive(activeTabId);
     const handle = terminalRefs.current.get(activeTabId);
     handle?.sendCommand(command);
     handle?.focus();
@@ -247,7 +259,9 @@ function App() {
                 tabs.map((tab) => (
                   <div
                     key={tab.id}
-                    className={`absolute inset-0 ${tab.id === activeTabId ? 'z-10' : 'z-0 opacity-0'}`}
+                    className={`absolute inset-0 ${
+                      tab.id === activeTabId ? 'block' : 'hidden'
+                    }`}
                   >
                     <Terminal
                       ref={(el) => {
@@ -259,6 +273,7 @@ function App() {
                       }}
                       project={tab.project}
                       isActive={tab.id === activeTabId}
+                      onOutput={() => markActive(tab.id)}
                     />
                   </div>
                 ))
@@ -305,6 +320,13 @@ function App() {
             <RightPanel
               project={activeProject}
               sessions={sessions}
+              status={
+                activeTabId
+                  ? isTabIdle(activeTabId)
+                    ? 'idle'
+                    : 'running'
+                  : 'none'
+              }
               onOpenKimi={() => activeProject && openKimi(activeProject)}
               onEdit={() => setIsEditOpen(true)}
               onCollapse={() => setRightCollapsed(true)}

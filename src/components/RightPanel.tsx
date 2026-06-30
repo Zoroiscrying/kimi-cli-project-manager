@@ -3,6 +3,7 @@ import type { Project, Session } from '../types';
 interface RightPanelProps {
   project: Project | null;
   sessions: Session[];
+  status?: 'none' | 'idle' | 'running';
   onOpenKimi?: () => void;
   onEdit?: () => void;
   onCollapse?: () => void;
@@ -11,6 +12,7 @@ interface RightPanelProps {
 export function RightPanel({
   project,
   sessions,
+  status = 'none',
   onOpenKimi,
   onEdit,
   onCollapse,
@@ -50,6 +52,28 @@ export function RightPanel({
           </div>
         ) : (
           <div className="space-y-6">
+            {status !== 'none' && (
+              <section>
+                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[#7d7196]">
+                  状态
+                </h3>
+                <div
+                  className={`flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-medium ${
+                    status === 'running'
+                      ? 'border-[#7c3aed]/30 bg-[#7c3aed]/10 text-[#d8b4fe]'
+                      : 'border-green-500/20 bg-green-500/10 text-green-300'
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      status === 'running' ? 'animate-pulse bg-[#c084fc]' : 'bg-green-400'
+                    }`}
+                  />
+                  {status === 'running' ? 'Kimi 正在运行…' : 'Kimi 当前空闲'}
+                </div>
+              </section>
+            )}
+
             <section>
               <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[#7d7196]">
                 项目
