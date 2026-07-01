@@ -57,15 +57,29 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
     const hasInputRef = useRef(false);
+    const outputTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearOutputTimer = () => {
+      if (outputTimerRef.current) {
+        clearTimeout(outputTimerRef.current);
+        outputTimerRef.current = null;
+      }
+    };
+
+    const startOutputTimer = () => {
+      clearOutputTimer();
+      outputTimerRef.current = setTimeout(() => {
+        onSessionStatusChange?.('completed');
+      }, 3000);
+    };
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
         const term = terminalRef.current;
         if (!term || !command) return;
-        if (!hasInputRef.current) {
-          hasInputRef.current = true;
-          onSessionStatusChange?.('running');
-        }
+        hasInputRef.current = true;
+        onSessionStatusChange?.('running');
+        startOutputTimer();
         term.write(command);
         term.write('\r');
         invoke('write_terminal', { sessionId, data: command + '\r' }).catch(
@@ -107,10 +121,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       fitAddonRef.current = fitAddon;
 
       const onDataDisposable = term.onData((data) => {
-        if (!hasInputRef.current && data.trim().length > 0) {
-          hasInputRef.current = true;
-          onSessionStatusChange?.('running');
-        }
+        hasInputRef.current = true;
+        onSessionStatusChange?.('running');
+        startOutputTimer();
         invoke('write_terminal', { sessionId, data }).catch((err) => {
           term.writeln(`\r\n[write error: ${err}]`);
         });
@@ -148,6 +161,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               if (wasAtBottom) {
                 term.scrollToBottom();
               }
+              if (hasInputRef.current) {
+                onSessionStatusChange?.('running');
+                startOutputTimer();
+              }
             }
           }
         );
@@ -166,6 +183,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       cleanupRef.current = () => {
         mounted = false;
+        clearOutputTimer();
         window.removeEventListener('resize', handleResize);
         onDataDisposable.dispose();
         unlisten?.();
