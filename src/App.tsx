@@ -74,7 +74,6 @@ function App() {
     const interval = setInterval(() => {
       for (const tab of tabs) {
         if (!startedTabsRef.current.has(tab.id)) continue;
-        if (sessionStatuses[tab.id] !== 'running') continue;
         const sessionId = sessionIdForTab(tab);
         import('@tauri-apps/api/core')
           .then(({ invoke }) => invoke<boolean>('is_terminal_running', { sessionId }))
@@ -330,7 +329,6 @@ function App() {
                       isActive={tab.id === activeTabId}
                       onSessionStart={() => {
                         startedTabsRef.current.add(tab.id);
-                        setTabStatus(tab.id, 'running');
                       }}
                       onSessionStatusChange={(status) => setTabStatus(tab.id, status)}
                     />

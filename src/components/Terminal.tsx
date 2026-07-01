@@ -56,11 +56,16 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const fitAddonRef = useRef<FitAddon | null>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
+    const hasInputRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
         const term = terminalRef.current;
-        if (!term) return;
+        if (!term || !command) return;
+        if (!hasInputRef.current) {
+          hasInputRef.current = true;
+          onSessionStatusChange?.('running');
+        }
         term.write(command);
         term.write('\r');
         invoke('write_terminal', { sessionId, data: command + '\r' }).catch(
@@ -102,6 +107,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       fitAddonRef.current = fitAddon;
 
       const onDataDisposable = term.onData((data) => {
+        if (!hasInputRef.current && data.trim().length > 0) {
+          hasInputRef.current = true;
+          onSessionStatusChange?.('running');
+        }
         invoke('write_terminal', { sessionId, data }).catch((err) => {
           term.writeln(`\r\n[write error: ${err}]`);
         });
