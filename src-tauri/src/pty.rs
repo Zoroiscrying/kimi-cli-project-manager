@@ -48,16 +48,12 @@ impl PtyManager {
                 crate::kimi_import::find_latest_kimi_session(&content, &cwd)
             });
 
-        let mut cmd = if cfg!(target_os = "windows") {
-            let mut c = portable_pty::CommandBuilder::new("cmd.exe");
-            c.arg("/k");
-            c
-        } else {
-            let mut c = portable_pty::CommandBuilder::new("bash");
-            c.arg("-l");
-            c
-        };
+        let mut cmd = portable_pty::CommandBuilder::new("kimi");
         cmd.cwd(&cwd);
+        if let Some(id) = kimi_session.as_ref() {
+            cmd.arg("-S");
+            cmd.arg(id);
+        }
 
         let child: Box<dyn Child + Send> = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
         let master = pair.master;
@@ -91,14 +87,6 @@ impl PtyManager {
                 child: Arc::new(Mutex::new(child)),
             },
         );
-
-        // Boot into Kimi CLI automatically. Use a short delay so the shell prompt is ready.
-        let boot_cmd = match kimi_session {
-            Some(id) => format!("kimi -S {}\r", id),
-            None => "kimi\r".to_string(),
-        };
-        thread::sleep(std::time::Duration::from_millis(300));
-        let _ = self.write(&session_id, &boot_cmd);
 
         Ok(())
     }

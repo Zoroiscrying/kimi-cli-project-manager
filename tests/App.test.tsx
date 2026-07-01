@@ -70,6 +70,12 @@ describe('App', () => {
           settings: { theme: 'dark' },
         });
       }
+      if (cmd === 'is_terminal_running') {
+        return Promise.resolve(true);
+      }
+      if (cmd === 'stop_terminal') {
+        return Promise.resolve();
+      }
       return Promise.resolve();
     });
 

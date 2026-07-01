@@ -20,6 +20,7 @@ export interface TerminalHandle {
 
 interface TerminalProps {
   project: Project;
+  sessionId: string;
   isActive: boolean;
   onSessionStart?: () => void;
   onSessionStatusChange?: (status: SessionStatus) => void;
@@ -49,19 +50,17 @@ const TERMINAL_THEME = {
 };
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  ({ project, isActive, onSessionStart, onSessionStatusChange }, ref) => {
+  ({ project, sessionId, isActive, onSessionStart, onSessionStatusChange }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
-    const sessionIdRef = useRef<string | null>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
-        const sessionId = sessionIdRef.current;
         const term = terminalRef.current;
-        if (!sessionId || !term) return;
+        if (!term) return;
         term.write(command);
         term.write('\r');
         invoke('write_terminal', { sessionId, data: command + '\r' }).catch(
@@ -103,25 +102,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       fitAddonRef.current = fitAddon;
 
       const onDataDisposable = term.onData((data) => {
-        const sessionId = sessionIdRef.current;
-        if (sessionId) {
-          invoke('write_terminal', { sessionId, data }).catch((err) => {
-            term.writeln(`\r\n[write error: ${err}]`);
-          });
-        }
+        invoke('write_terminal', { sessionId, data }).catch((err) => {
+          term.writeln(`\r\n[write error: ${err}]`);
+        });
       });
 
       const handleResize = () => {
         if (!isActive) return;
         fitAddon.fit();
         term.scrollToBottom();
-        const sessionId = sessionIdRef.current;
-        if (sessionId) {
-          const rows = term.rows;
-          const cols = term.cols;
-          if (rows && cols) {
-            invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-          }
+        const rows = term.rows;
+        const cols = term.cols;
+        if (rows && cols) {
+          invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
         }
       };
       window.addEventListener('resize', handleResize);
@@ -130,9 +123,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       let unlisten: UnlistenFn | null = null;
 
       async function setupSession() {
-        const sessionId = `term-${project.id}`;
-        sessionIdRef.current = sessionId;
-
         unlisten = await listen<{ session_id: string; data: string }>(
           'terminal-output',
           (event) => {
@@ -170,10 +160,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         window.removeEventListener('resize', handleResize);
         onDataDisposable.dispose();
         unlisten?.();
-        if (sessionIdRef.current) {
-          invoke('stop_terminal', { sessionId: sessionIdRef.current }).catch(() => {});
-          sessionIdRef.current = null;
-        }
+        invoke('stop_terminal', { sessionId }).catch(() => {});
         term.dispose();
         terminalRef.current = null;
         fitAddonRef.current = null;
@@ -191,15 +178,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         fitAddonRef.current?.fit();
         const rows = terminalRef.current?.rows;
         const cols = terminalRef.current?.cols;
-        const sessionId = sessionIdRef.current;
-        if (rows && cols && sessionId) {
+        if (rows && cols) {
           invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
         }
-        terminalRef.current?.scrollToBottom();
         terminalRef.current?.refresh(0, (terminalRef.current?.rows ?? 1) - 1);
+        terminalRef.current?.scrollToBottom();
         terminalRef.current?.focus();
       });
-    }, [isActive]);
+    }, [isActive, sessionId]);
 
     // On unmount (tab closed), tear everything down.
     useEffect(() => {
@@ -212,7 +198,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     return (
       <div
         ref={containerRef}
-        className={`h-full w-full ${isActive ? '' : 'hidden'}`}
+        className="h-full w-full"
       />
     );
   }

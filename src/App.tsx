@@ -75,7 +75,7 @@ function App() {
       for (const tab of tabs) {
         if (!startedTabsRef.current.has(tab.id)) continue;
         if (sessionStatuses[tab.id] !== 'running') continue;
-        const sessionId = `term-${tab.project.id}`;
+        const sessionId = sessionIdForTab(tab);
         import('@tauri-apps/api/core')
           .then(({ invoke }) => invoke<boolean>('is_terminal_running', { sessionId }))
           .then((running) => {
@@ -120,12 +120,14 @@ function App() {
     setTabStatus(newTab.id, 'not-started');
   };
 
+  const sessionIdForTab = (tab: Tab) => `term-${tab.id}`;
+
   const handleCloseTab = async (tabId: string) => {
     const tab = tabs.find((t) => t.id === tabId);
     if (tab) {
       try {
         await import('@tauri-apps/api/core').then(({ invoke }) =>
-          invoke('stop_terminal', { sessionId: `term-${tab.project.id}` })
+          invoke('stop_terminal', { sessionId: sessionIdForTab(tab) })
         );
       } catch {
         // ignore
@@ -324,6 +326,7 @@ function App() {
                         }
                       }}
                       project={tab.project}
+                      sessionId={sessionIdForTab(tab)}
                       isActive={tab.id === activeTabId}
                       onSessionStart={() => {
                         startedTabsRef.current.add(tab.id);
