@@ -11,8 +11,8 @@ export function StatusDot({ status, size = 'sm' }: StatusDotProps) {
   if (status === 'running') {
     return (
       <span className="relative inline-flex" title="运行中">
-        <span className={`absolute inline-flex ${sizeClasses} animate-ping rounded-full bg-white opacity-75`} />
-        <span className={`relative inline-flex ${sizeClasses} rounded-full bg-black ring-1 ring-white/50`} />
+        <span className={`absolute inline-flex ${sizeClasses} animate-ping rounded-full bg-[#a16bff] opacity-60`} />
+        <span className={`relative inline-flex ${sizeClasses} rounded-full bg-[#985ffb]`} />
       </span>
     );
   }
@@ -20,7 +20,7 @@ export function StatusDot({ status, size = 'sm' }: StatusDotProps) {
   if (status === 'completed') {
     return (
       <span
-        className={`inline-flex ${sizeClasses} rounded-full bg-[#1a88ff]`}
+        className={`inline-flex ${sizeClasses} rounded-full bg-[#1783ff]`}
         title="已完成"
       />
     );
@@ -28,7 +28,7 @@ export function StatusDot({ status, size = 'sm' }: StatusDotProps) {
 
   return (
     <span
-      className={`inline-flex ${sizeClasses} rounded-full bg-white/70`}
+      className={`inline-flex ${sizeClasses} rounded-full bg-black/25`}
       title="未开始"
     />
   );

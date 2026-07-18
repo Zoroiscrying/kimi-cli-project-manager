@@ -90,7 +90,7 @@ function App() {
 
   if (!loaded) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#181817] text-[#ffffff8f]">
+      <div className="flex h-screen items-center justify-center bg-[#fbfaf9] text-[#00000099]">
         Loading...
       </div>
     );
@@ -163,22 +163,22 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#181817] text-[#ffffffd6]">
+    <div className="flex h-screen overflow-hidden bg-[#fbfaf9] text-[#000000e6]">
       {/* Left sidebar */}
       <div
-        className={`flex flex-shrink-0 flex-col overflow-hidden border-r border-white/5 bg-[#1f1f1f] transition-all duration-300 ease-out ${
+        className={`flex flex-shrink-0 flex-col overflow-hidden border-r border-black/5 bg-[#f5f5f5] transition-all duration-300 ease-out ${
           leftCollapsed ? 'w-14' : 'w-60'
         }`}
       >
-        <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-white/5 px-3">
+        <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-black/5 px-3">
           {!leftCollapsed && (
-            <span className="bg-gradient-to-r from-[#a16bff] to-[#8a5cf6] bg-clip-text text-sm font-bold text-transparent">
+            <span className="bg-gradient-to-r from-[#985ffb] to-[#a16bff] bg-clip-text text-sm font-bold text-transparent">
               Kimi CLI PM
             </span>
           )}
           <button
             onClick={() => setLeftCollapsed((v) => !v)}
-            className="rounded-md p-1.5 text-[#ffffff8f] hover:bg-white/5 hover:text-white"
+            className="rounded-md p-1.5 text-[#00000099] hover:bg-black/5 hover:text-black"
             aria-label={leftCollapsed ? '展开左侧面板' : '收起左侧面板'}
           >
             <svg
@@ -208,18 +208,18 @@ function App() {
         </div>
 
         {!leftCollapsed && (
-          <div className="shrink-0 space-y-2 border-t border-white/5 p-3">
+          <div className="shrink-0 space-y-2 border-t border-black/5 p-3">
             <button
               onClick={() => setIsAddOpen(true)}
               aria-label="Add Project"
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#a16bff] to-[#8a5cf6] py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/20 hover:from-[#a672ff] hover:to-[#9565f0]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#985ffb] to-[#a16bff] py-2 text-sm font-medium text-white shadow-lg shadow-black/20 hover:from-[#935cf3] hover:to-[#905aee]"
             >
               <span>+</span>
               <span>Add Project</span>
             </button>
             <button
               onClick={() => importKimiProjects()}
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-sm font-medium text-[#ffffffd6] hover:bg-white/10"
+              className="w-full rounded-xl border border-black/10 bg-black/5 py-2 text-sm font-medium text-[#000000e6] hover:bg-black/10"
             >
               Import from Kimi
             </button>
@@ -227,17 +227,17 @@ function App() {
         )}
 
         {leftCollapsed && (
-          <div className="flex shrink-0 flex-col items-center gap-2 border-t border-white/5 py-3">
+          <div className="flex shrink-0 flex-col items-center gap-2 border-t border-black/5 py-3">
             <button
               onClick={() => setIsAddOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#a16bff] to-[#8a5cf6] text-white shadow-lg shadow-purple-900/20"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#985ffb] to-[#a16bff] text-white shadow-lg shadow-black/20"
               aria-label="Add Project"
             >
               +
             </button>
             <button
               onClick={() => importKimiProjects()}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#ffffffd6] hover:bg-white/10"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-black/5 text-[#000000e6] hover:bg-black/10"
               aria-label="Import from Kimi"
             >
               ↓
@@ -250,15 +250,15 @@ function App() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Tab bar */}
         {tabs.length > 0 && (
-          <div className="flex h-11 flex-shrink-0 items-center gap-1 border-b border-white/5 bg-[#181817] px-3">
+          <div className="flex h-11 flex-shrink-0 items-center gap-1 border-b border-black/5 bg-[#fbfaf9] px-3">
             {tabs.map((tab) => (
               <div
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
                 className={`group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   tab.id === activeTabId
-                    ? 'bg-gradient-to-r from-[#a16bff]/40 to-[#8a5cf6]/25 text-white shadow-lg shadow-purple-900/20'
-                    : 'text-[#ffffff8f] hover:bg-white/5 hover:text-[#ffffffd6]'
+                    ? 'bg-[#985ffb]/15 text-[#8a4df0]'
+                    : 'text-[#00000099] hover:bg-black/5 hover:text-[#000000e6]'
                 }`}
               >
                 <StatusDot status={sessionStatuses[tab.id] ?? 'not-started'} size="sm" />
@@ -268,7 +268,7 @@ function App() {
                     e.stopPropagation();
                     handleCloseTab(tab.id);
                   }}
-                  className="rounded p-0.5 opacity-60 hover:bg-white/10 hover:opacity-100"
+                  className="rounded p-0.5 opacity-60 hover:bg-black/10 hover:opacity-100"
                   aria-label="Close tab"
                 >
                   <svg
@@ -289,13 +289,13 @@ function App() {
         <div className="relative flex flex-1 flex-row overflow-hidden">
           {/* Center terminal */}
           <div className="flex flex-1 flex-col overflow-hidden p-3">
-            <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-2xl shadow-purple-900/10">
+            <div className="relative flex-1 overflow-hidden rounded-2xl border border-black/10 bg-[#121212] shadow-2xl shadow-black/10">
               {tabs.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-[#ffffff6b]">
+                <div className="flex h-full flex-col items-center justify-center text-[#00000073]">
                   <img
                     src="/icon.svg"
                     alt="Kimi CLI Project Manager"
-                    className="mb-4 h-16 w-16 rounded-2xl shadow-lg shadow-purple-900/30"
+                    className="mb-4 h-16 w-16 rounded-2xl shadow-lg shadow-black/30"
                   />
                   <p className="text-sm">从左侧选择一个项目开始</p>
                 </div>
@@ -325,7 +325,7 @@ function App() {
           {/* Right sidebar toggle button */}
           <button
             onClick={() => setRightCollapsed((v) => !v)}
-            className={`absolute right-3 top-3 z-20 rounded-lg border border-white/10 bg-[#292929] p-1.5 text-[#ffffff8f] shadow-lg hover:bg-[#343434] hover:text-white ${
+            className={`absolute right-3 top-3 z-20 rounded-lg border border-black/10 bg-[#ffffff] p-1.5 text-[#00000099] shadow-lg hover:bg-[#eeeeee] hover:text-black ${
               rightCollapsed ? 'opacity-100' : 'opacity-0 hover:opacity-100'
             } transition-opacity`}
             aria-label={rightCollapsed ? '展开右侧面板' : '收起右侧面板'}
@@ -346,7 +346,7 @@ function App() {
 
           {/* Right sidebar */}
           <div
-            className={`flex-shrink-0 overflow-hidden border-l border-white/5 bg-[#1f1f1f] transition-all duration-300 ease-out ${
+            className={`flex-shrink-0 overflow-hidden border-l border-black/5 bg-[#f5f5f5] transition-all duration-300 ease-out ${
               rightCollapsed ? 'w-0 opacity-0' : 'w-72 opacity-100'
             }`}
           >

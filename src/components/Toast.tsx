@@ -12,7 +12,7 @@ export function Toast({ message, onClose }: ToastProps) {
   }, [onClose]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-2xl border border-red-500/20 bg-gradient-to-r from-[#7f1d1d] to-[#450a0a] px-5 py-3 text-sm text-white shadow-2xl shadow-red-900/30">
+    <div className="fixed bottom-4 right-4 z-50 rounded-2xl border border-red-500/20 bg-[#fef2f2] px-5 py-3 text-sm text-[#b91c1c] shadow-xl shadow-black/10">
       {message}
     </div>
   );
