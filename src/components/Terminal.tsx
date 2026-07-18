@@ -26,16 +26,24 @@ interface TerminalProps {
   onSessionStatusChange?: (status: SessionStatus) => void;
 }
 
-const ANSI_ESCAPE_RE = /\x1b\[[0-9;]*[a-zA-Z]/g;
+const ANSI_ESCAPE_RE = /\x1b\[[0-9;?]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][0-9A-Z]/g;
 
 function stripAnsi(text: string): string {
   return text.replace(ANSI_ESCAPE_RE, '');
 }
 
+// Kimi CLI is a full-screen TUI: when it is idle it repaints the input box,
+// so the bare ">" prompt appears as one of the LAST FEW LINES of the stream
+// (followed by the box border and the bottom status bar), never at the very
+// end of the output. While it is generating, no bare prompt line exists.
 function looksLikePrompt(tail: string): boolean {
-  const plain = stripAnsi(tail);
-  // Match a line that is just ">" or "> " at the very end of output.
-  return /[\r\n]>\s*$/.test(plain);
+  const plain = stripAnsi(tail).replace(/\r/g, '\n');
+  const lines = plain
+    .split('\n')
+    .map((l) => l.trimEnd())
+    .filter((l) => l.length > 0)
+    .slice(-8);
+  return lines.some((line) => /^\s*[│┃|]?\s?>█?$/.test(line));
 }
 
 // Kimi-inspired purple/blue terminal palette
@@ -71,6 +79,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const hasInputRef = useRef(false);
     const outputTailRef = useRef('');
     const userScrolledUpRef = useRef(false);
+    const completedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
@@ -159,12 +168,24 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               }
               if (hasInputRef.current) {
                 outputTailRef.current += event.payload.data;
-                if (outputTailRef.current.length > 256) {
-                  outputTailRef.current = outputTailRef.current.slice(-256);
+                if (outputTailRef.current.length > 4096) {
+                  outputTailRef.current = outputTailRef.current.slice(-4096);
                 }
                 if (looksLikePrompt(outputTailRef.current)) {
-                  onSessionStatusChange?.('completed');
+                  // Idle frame detected. Confirm with a short quiet period so
+                  // mid-stream ">" lines can't cause status flicker.
+                  if (completedTimerRef.current) {
+                    clearTimeout(completedTimerRef.current);
+                  }
+                  completedTimerRef.current = setTimeout(() => {
+                    completedTimerRef.current = null;
+                    onSessionStatusChange?.('completed');
+                  }, 800);
                 } else {
+                  if (completedTimerRef.current) {
+                    clearTimeout(completedTimerRef.current);
+                    completedTimerRef.current = null;
+                  }
                   onSessionStatusChange?.('running');
                 }
               }
@@ -186,6 +207,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       cleanupRef.current = () => {
         mounted = false;
+        if (completedTimerRef.current) {
+          clearTimeout(completedTimerRef.current);
+          completedTimerRef.current = null;
+        }
         onDataDisposable.dispose();
         onScrollDisposable.dispose();
         unlisten?.();
