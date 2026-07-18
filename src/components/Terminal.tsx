@@ -12,7 +12,6 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import '@xterm/xterm/css/xterm.css';
 import type { Project } from '../types';
 import type { SessionStatus } from './StatusDot';
-import { playCompletionSound } from '../sound';
 
 export interface TerminalHandle {
   sendCommand: (command: string) => void;
@@ -86,33 +85,20 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const lastEvalRef = useRef(0);
     const progressSignalRef = useRef(false);
     const oscTailRef = useRef('');
-    const lastEmittedStatusRef = useRef<SessionStatus | null>(null);
 
-    // Emit status changes; play a short chime on the transition INTO completed.
-    const emitStatus = (status: SessionStatus) => {
-      if (status === 'completed' && lastEmittedStatusRef.current !== 'completed') {
-        playCompletionSound();
-      }
-      lastEmittedStatusRef.current = status;
-      onSessionStatusChange?.(status);
-    };
-
-    // Completion detection, three layered signals:
-    // 1. term.onBell — Kimi emits a terminal bell (BEL) / OSC 9 on turn-complete.
-    // 2. Trailing timer — after output pauses, check the parsed screen for the
-    //    idle input box (bare ">" prompt) without a spinner.
-    // 3. Throttled per-chunk check — same screen check, covers the case where
-    //    the status bar keeps repainting so output never fully pauses.
+    // Completion detection. "running" is only entered on USER INPUT or the
+    // OSC 9;4 busy signal — never on plain output — so once a turn completes
+    // the status sticks and incidental repaints (tab switch resize, periodic
+    // status-bar redraws) cannot flip it back and forth.
     const evaluateStatus = () => {
       const term = terminalRef.current;
       if (!term || !hasInputRef.current) return;
       if (bufferShowsIdlePrompt(term)) {
-        emitStatus('completed');
+        onSessionStatusChange?.('completed');
       }
     };
 
     const scheduleStatusCheck = () => {
-      emitStatus('running');
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(() => {
         idleTimerRef.current = null;
@@ -125,7 +111,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         const term = terminalRef.current;
         if (!term || !command) return;
         hasInputRef.current = true;
-        emitStatus('running');
+        onSessionStatusChange?.('running');
         term.write(command);
         term.write('\r');
         invoke('write_terminal', { sessionId, data: command + '\r' }).catch(
@@ -185,6 +171,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       const onDataDisposable = term.onData((data) => {
         hasInputRef.current = true;
+        // User input is the only thing (besides the OSC 9;4 busy signal) that
+        // moves the status into running; output alone never does.
+        onSessionStatusChange?.('running');
         scheduleStatusCheck();
         invoke('write_terminal', { sessionId, data }).catch((err) => {
           term.writeln(`\r\n[write error: ${err}]`);
@@ -202,7 +191,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       // Kimi Code emits a terminal bell / OSC 9 notification on turn-complete.
       const onBellDisposable = term.onBell(() => {
         if (hasInputRef.current) {
-          emitStatus('completed');
+          onSessionStatusChange?.('completed');
         }
       });
 
@@ -235,11 +224,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               let handled = false;
               if (oscHay.includes('\x1b]9;4;3')) {
                 progressSignalRef.current = true;
-                emitStatus('running');
+                onSessionStatusChange?.('running');
                 handled = true;
               } else if (oscHay.includes('\x1b]9;4;0')) {
                 progressSignalRef.current = true;
-                emitStatus('completed');
+                onSessionStatusChange?.('completed');
                 handled = true;
               }
               oscTailRef.current = oscHay.slice(-16);
@@ -262,7 +251,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
           await invoke('start_terminal', { sessionId, cwd: project.path });
           onSessionStart?.();
         } catch (err) {
-          emitStatus('completed');
+          onSessionStatusChange?.('completed');
           if (terminalRef.current) {
             terminalRef.current.writeln(`\r\n[failed to start terminal: ${err}]`);
           }
