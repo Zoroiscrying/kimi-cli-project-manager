@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="112" fill="#161616"/>
-  <path d="M150 130h56v252h-56zM206 250l124-118h66L264 250l136 130h-70L206 250z" fill="#ffffff"/>
-  <circle cx="435" cy="105" r="26" fill="#1a88ff"/>
+  <path d="M140 120h60v272h-60zM200 255l140-135h72L268 255l148 137h-76L200 255z" fill="#ffffff"/>
+  <rect x="318" y="296" width="144" height="90" rx="22" fill="#1a88ff"/>
+  <text x="390" y="341" font-family="Arial, 'Segoe UI', sans-serif" font-size="60" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central">PM</text>
 </svg>
