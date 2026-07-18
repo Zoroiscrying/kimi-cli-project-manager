@@ -17,6 +17,8 @@
 
 一个用于管理 [Kimi Code CLI](https://github.com/moonshotai/kimi-code) 项目的桌面应用。受 OpenAI Codex Desktop 启发，把项目列表、内嵌终端和会话管理整合到一个原生窗口里。
 
+> **声明**：KPM 是社区自发的非官方项目，与 Moonshot AI（月之暗面）无任何隶属、背书或赞助关系。「Kimi」「Kimi Code」为 Moonshot AI 的商标。
+
 ## 功能
 
 - **项目管理**：添加、编辑、删除常用项目，支持从 Kimi CLI 历史自动导入。
