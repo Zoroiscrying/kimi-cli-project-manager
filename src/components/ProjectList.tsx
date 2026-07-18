@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SearchBox } from './SearchBox';
 import { StatusDot, type SessionStatus } from './StatusDot';
+import { useI18n } from '../i18n';
 import type { Project } from '../types';
 
 interface ProjectListProps {
@@ -21,6 +22,7 @@ export function ProjectList({
   getStatus = () => 'not-started',
 }: ProjectListProps) {
   const [query, setQuery] = useState('');
+  const { t } = useI18n();
 
   const filtered = projects.filter(
     (p) =>
@@ -55,12 +57,12 @@ export function ProjectList({
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-4">
-        <SearchBox value={query} onChange={setQuery} />
+        <SearchBox value={query} onChange={setQuery} placeholder={t('list.search')} />
       </div>
       <div className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
           <div className="py-8 text-center text-sm text-[#ffffff66]">
-            {projects.length === 0 ? 'No projects yet.' : 'No projects match your search.'}
+            {projects.length === 0 ? t('list.empty') : t('list.noMatch')}
           </div>
         ) : (
           filtered.map((project) => (
@@ -96,7 +98,7 @@ export function ProjectList({
                   onDelete(project.id);
                 }}
                 className="ml-2 shrink-0 rounded p-1 text-[#ffffff66] hover:bg-white/10 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-[#1783ff]"
-                aria-label={`Delete ${project.name}`}
+                aria-label={`${t('list.delete')} ${project.name}`}
               >
                 ×
               </button>
