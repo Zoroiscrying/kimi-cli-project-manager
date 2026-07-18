@@ -165,7 +165,7 @@
       <span class="spacer"></span>
       <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">GitHub</a>
       <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases" data-i18n="nav.download">下载</a>
-      <a class="nav-link" href="https://ko-fi.com/zoroiscrying">Support</a>
+      <a class="nav-link" href="https://ko-fi.com/zoroiscrying" data-support-link data-i18n="nav.support">Support</a>
       <button id="lang-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </nav>
@@ -187,7 +187,7 @@
         <a class="btn btn-ghost" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager" data-i18n="hero.github">
           GitHub 仓库
         </a>
-        <a class="btn btn-ghost" href="https://ko-fi.com/zoroiscrying" data-i18n="hero.kofi">
+        <a class="btn btn-ghost" href="https://ko-fi.com/zoroiscrying" data-support-link data-i18n="hero.kofi">
           ☕ Support on Ko-fi
         </a>
       </div>
@@ -234,7 +234,7 @@
     <div class="container">
       <h2 data-i18n="support.title">觉得有用？请我喝杯咖啡</h2>
       <p data-i18n="support.desc">KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。</p>
-      <a class="btn btn-primary" href="https://ko-fi.com/zoroiscrying" data-i18n="support.btn">☕ 在 Ko-fi 上支持</a>
+      <a class="btn btn-primary" href="https://ko-fi.com/zoroiscrying" data-support-link data-i18n="support.btn">☕ 在 Ko-fi 上支持</a>
     </div>
   </section>
 
@@ -243,7 +243,7 @@
       <p>
         KPM — Kimi CLI Project Manager · MIT License ·
         <a href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">GitHub</a> ·
-        <a href="https://ko-fi.com/zoroiscrying">Ko-fi</a>
+        <a href="https://ko-fi.com/zoroiscrying" data-support-link data-i18n="footer.support">Ko-fi</a>
       </p>
     </div>
   </footer>
@@ -252,11 +252,12 @@
     const translations = {
       zh: {
         "nav.download": "下载",
+        "nav.support": "支持",
         "hero.pain": "Kimi Code 目前还没有多项目管理客户端 —— KPM 就是来补这个缺口的。",
         "hero.tagline": "把每一个 Kimi Code CLI 项目收进同一个桌面工作台：多标签内嵌终端、会话自动恢复，切换项目不再丢上下文。",
         "hero.download": "下载 Windows 版",
         "hero.github": "GitHub 仓库",
-        "hero.kofi": "☕ 在 Ko-fi 上支持",
+        "hero.kofi": "☕ 在爱发电支持",
         "features.title": "为 Kimi Code CLI 重度用户而生",
         "f1.title": "多标签终端",
         "f1.desc": "每个项目独占一个内嵌终端标签，切换不中断，多个 Kimi 会话并行推进。",
@@ -268,10 +269,12 @@
         "f4.desc": "运行状态、项目详情、最近会话一目了然，打开文件夹、复制路径一步到位。",
         "support.title": "觉得有用？请我喝杯咖啡",
         "support.desc": "KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。",
-        "support.btn": "☕ 在 Ko-fi 上支持"
+        "support.btn": "☕ 在爱发电支持",
+        "footer.support": "爱发电"
       },
       en: {
         "nav.download": "Download",
+        "nav.support": "Support",
         "hero.pain": "Kimi Code currently doesn't have a multi-project management client — KPM fills that gap.",
         "hero.tagline": "Bring every Kimi Code CLI project into one desktop workspace: multi-tab embedded terminals and automatic session restore, so switching projects never loses your context.",
         "hero.download": "Download for Windows",
@@ -288,7 +291,8 @@
         "f4.desc": "Run status, project details and recent sessions at a glance. Open folder or copy the path in one click.",
         "support.title": "Find it useful? Buy me a coffee",
         "support.desc": "KPM is a free, open-source personal project. Your support keeps it going.",
-        "support.btn": "☕ Support on Ko-fi"
+        "support.btn": "☕ Support on Ko-fi",
+        "footer.support": "Ko-fi"
       }
     };
 
@@ -305,6 +309,12 @@
       document.querySelectorAll("[data-i18n]").forEach((el) => {
         const key = el.getAttribute("data-i18n");
         if (dict[key]) el.textContent = dict[key];
+      });
+      const supportUrl = lang === "zh"
+        ? "https://ifdian.net/a/zorogames"
+        : "https://ko-fi.com/zoroiscrying";
+      document.querySelectorAll("[data-support-link]").forEach((el) => {
+        el.setAttribute("href", supportUrl);
       });
       document.getElementById("lang-toggle").textContent = lang === "zh" ? "EN" : "中文";
       localStorage.setItem("kpm-lang", lang);
