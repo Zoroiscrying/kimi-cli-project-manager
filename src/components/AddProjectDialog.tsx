@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
+import { useI18n } from '../i18n';
 
 interface AddProjectDialogProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export function AddProjectDialog({ isOpen, onClose, onAdd }: AddProjectDialogPro
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
   const [description, setDescription] = useState('');
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!isOpen) {
@@ -77,12 +79,12 @@ export function AddProjectDialog({ isOpen, onClose, onAdd }: AddProjectDialogPro
     >
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1e1e1e] p-6 shadow-2xl">
         <h2 id="add-project-title" className="mb-4 text-xl font-bold text-[#ffffff]">
-          Add Project
+          {t('dialog.addTitle')}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="add-project-name" className="mb-1 block text-sm text-[#ffffff99]">
-              Name
+              {t('dialog.name')}
             </label>
             <input
               id="add-project-name"
@@ -94,7 +96,7 @@ export function AddProjectDialog({ isOpen, onClose, onAdd }: AddProjectDialogPro
           </div>
           <div>
             <label htmlFor="add-project-path" className="mb-1 block text-sm text-[#ffffff99]">
-              Path
+              {t('dialog.path')}
             </label>
             <div className="flex gap-2">
               <input
@@ -109,13 +111,13 @@ export function AddProjectDialog({ isOpen, onClose, onAdd }: AddProjectDialogPro
                 onClick={pickDirectory}
                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#ffffff] hover:bg-white/10"
               >
-                Browse
+                {t('dialog.browse')}
               </button>
             </div>
           </div>
           <div>
             <label htmlFor="add-project-description" className="mb-1 block text-sm text-[#ffffff99]">
-              Description
+              {t('dialog.description')}
             </label>
             <input
               id="add-project-description"
@@ -130,13 +132,13 @@ export function AddProjectDialog({ isOpen, onClose, onAdd }: AddProjectDialogPro
               onClick={onClose}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#ffffff] hover:bg-white/10"
             >
-              Cancel
+              {t('dialog.cancel')}
             </button>
             <button
               type="submit"
               className="rounded-xl bg-gradient-to-r from-[#1783ff] to-[#258eff] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/20 hover:from-[#258eff] hover:to-[#1a88ff]"
             >
-              Add
+              {t('dialog.add')}
             </button>
           </div>
         </form>
