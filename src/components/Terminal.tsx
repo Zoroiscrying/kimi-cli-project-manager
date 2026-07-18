@@ -26,23 +26,21 @@ interface TerminalProps {
   onSessionStatusChange?: (status: SessionStatus) => void;
 }
 
-const ANSI_ESCAPE_RE = /\x1b\[[0-9;?]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][0-9A-Z]/g;
-
-function stripAnsi(text: string): string {
-  return text.replace(ANSI_ESCAPE_RE, '');
-}
-
-// Kimi CLI is a full-screen TUI: when it is idle it repaints the input box,
-// so the bare ">" prompt appears as one of the LAST FEW LINES of the stream
-// (followed by the box border and the bottom status bar), never at the very
-// end of the output. While it is generating, no bare prompt line exists.
-function looksLikePrompt(tail: string): boolean {
-  const plain = stripAnsi(tail).replace(/\r/g, '\n');
-  const lines = plain
-    .split('\n')
-    .map((l) => l.trimEnd())
-    .filter((l) => l.length > 0)
-    .slice(-8);
+// Kimi CLI is a full-screen TUI: when it goes idle it repaints an input box
+// whose prompt line is a bare ">" (optionally with a cursor block), while the
+// bottom status bar stays below it. Instead of pattern-matching the raw PTY
+// byte stream (cursor-positioning sequences make "lines" unreliable there),
+// we read the already-parsed screen content from the xterm buffer.
+function bufferShowsIdlePrompt(term: XTerm): boolean {
+  const buf = term.buffer.active;
+  const lines: string[] = [];
+  const bottom = buf.baseY + term.rows - 1;
+  for (let y = bottom; y >= buf.baseY && lines.length < 12; y--) {
+    const line = buf.getLine(y);
+    if (!line) continue;
+    const text = line.translateToString(true).trimEnd();
+    if (text.length > 0) lines.push(text);
+  }
   return lines.some((line) => /^\s*[│┃|]?\s?>█?$/.test(line));
 }
 
@@ -77,16 +75,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
     const hasInputRef = useRef(false);
-    const outputTailRef = useRef('');
     const userScrolledUpRef = useRef(false);
-    const completedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
         const term = terminalRef.current;
         if (!term || !command) return;
         hasInputRef.current = true;
-        outputTailRef.current = '';
         onSessionStatusChange?.('running');
         term.write(command);
         term.write('\r');
@@ -130,7 +126,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       const onDataDisposable = term.onData((data) => {
         hasInputRef.current = true;
-        outputTailRef.current = '';
         onSessionStatusChange?.('running');
         invoke('write_terminal', { sessionId, data }).catch((err) => {
           term.writeln(`\r\n[write error: ${err}]`);
@@ -167,27 +162,18 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
                 });
               }
               if (hasInputRef.current) {
-                outputTailRef.current += event.payload.data;
-                if (outputTailRef.current.length > 4096) {
-                  outputTailRef.current = outputTailRef.current.slice(-4096);
+                onSessionStatusChange?.('running');
+                // Confirm completion from the parsed screen: once output goes
+                // quiet, check whether Kimi is showing its idle prompt box.
+                if (idleTimerRef.current) {
+                  clearTimeout(idleTimerRef.current);
                 }
-                if (looksLikePrompt(outputTailRef.current)) {
-                  // Idle frame detected. Confirm with a short quiet period so
-                  // mid-stream ">" lines can't cause status flicker.
-                  if (completedTimerRef.current) {
-                    clearTimeout(completedTimerRef.current);
-                  }
-                  completedTimerRef.current = setTimeout(() => {
-                    completedTimerRef.current = null;
+                idleTimerRef.current = setTimeout(() => {
+                  idleTimerRef.current = null;
+                  if (terminalRef.current && bufferShowsIdlePrompt(terminalRef.current)) {
                     onSessionStatusChange?.('completed');
-                  }, 800);
-                } else {
-                  if (completedTimerRef.current) {
-                    clearTimeout(completedTimerRef.current);
-                    completedTimerRef.current = null;
                   }
-                  onSessionStatusChange?.('running');
-                }
+                }, 700);
               }
             }
           }
@@ -207,9 +193,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       cleanupRef.current = () => {
         mounted = false;
-        if (completedTimerRef.current) {
-          clearTimeout(completedTimerRef.current);
-          completedTimerRef.current = null;
+        if (idleTimerRef.current) {
+          clearTimeout(idleTimerRef.current);
+          idleTimerRef.current = null;
         }
         onDataDisposable.dispose();
         onScrollDisposable.dispose();
