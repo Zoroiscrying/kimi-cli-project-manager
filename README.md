@@ -17,6 +17,8 @@
 
 A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-code) projects. Inspired by OpenAI Codex Desktop, it brings project listing, embedded terminals, and session management into a single native window.
 
+> **Disclaimer**: KPM is a community-built, unofficial project. It is not affiliated with, endorsed by, or sponsored by Moonshot AI. "Kimi" and "Kimi Code" are trademarks of Moonshot AI.
+
 ## Features
 
 - **Project management**: add, edit, and delete frequently used projects; import projects from Kimi CLI history.
