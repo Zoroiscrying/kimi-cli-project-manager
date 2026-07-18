@@ -42,7 +42,7 @@ function looksLikePrompt(tail: string): boolean {
 const TERMINAL_THEME = {
   background: '#121212',
   foreground: '#ffffffd6',
-  cursor: '#c9aaff',
+  cursor: '#ffffff',
   black: '#292929',
   brightBlack: '#4d4d4d',
   red: '#f87171',

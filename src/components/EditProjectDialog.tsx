@@ -77,25 +77,25 @@ export function EditProjectDialog({ project, isOpen, onClose, onSave }: EditProj
       aria-labelledby="edit-project-title"
       onClick={handleBackdropClick}
     >
-      <div className="w-full max-w-md rounded-2xl border border-black/10 bg-[#ffffff] p-6 shadow-2xl">
-        <h2 id="edit-project-title" className="mb-4 text-xl font-bold text-[#000000e6]">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1e1e1e] p-6 shadow-2xl">
+        <h2 id="edit-project-title" className="mb-4 text-xl font-bold text-[#ffffff]">
           Edit Project
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="edit-project-name" className="mb-1 block text-sm text-[#00000099]">
+            <label htmlFor="edit-project-name" className="mb-1 block text-sm text-[#ffffff99]">
               Name
             </label>
             <input
               id="edit-project-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-black/10 bg-[#f5f5f5] px-3 py-2 text-[#000000e6] outline-none focus:border-[#985ffb] focus:ring-1 focus:ring-[#985ffb]/50"
+              className="w-full rounded-xl border border-white/10 bg-[#161616] px-3 py-2 text-[#ffffff] outline-none focus:border-[#1783ff] focus:ring-1 focus:ring-[#1783ff]/50"
               required
             />
           </div>
           <div>
-            <label htmlFor="edit-project-path" className="mb-1 block text-sm text-[#00000099]">
+            <label htmlFor="edit-project-path" className="mb-1 block text-sm text-[#ffffff99]">
               Path
             </label>
             <div className="flex gap-2">
@@ -103,40 +103,40 @@ export function EditProjectDialog({ project, isOpen, onClose, onSave }: EditProj
                 id="edit-project-path"
                 value={path}
                 onChange={(e) => setPath(e.target.value)}
-                className="flex-1 rounded-xl border border-black/10 bg-[#f5f5f5] px-3 py-2 text-[#000000e6] outline-none focus:border-[#985ffb] focus:ring-1 focus:ring-[#985ffb]/50"
+                className="flex-1 rounded-xl border border-white/10 bg-[#161616] px-3 py-2 text-[#ffffff] outline-none focus:border-[#1783ff] focus:ring-1 focus:ring-[#1783ff]/50"
                 required
               />
               <button
                 type="button"
                 onClick={pickDirectory}
-                className="rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-sm text-[#000000e6] hover:bg-black/10"
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#ffffff] hover:bg-white/10"
               >
                 Browse
               </button>
             </div>
           </div>
           <div>
-            <label htmlFor="edit-project-description" className="mb-1 block text-sm text-[#00000099]">
+            <label htmlFor="edit-project-description" className="mb-1 block text-sm text-[#ffffff99]">
               Description
             </label>
             <input
               id="edit-project-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-black/10 bg-[#f5f5f5] px-3 py-2 text-[#000000e6] outline-none focus:border-[#985ffb] focus:ring-1 focus:ring-[#985ffb]/50"
+              className="w-full rounded-xl border border-white/10 bg-[#161616] px-3 py-2 text-[#ffffff] outline-none focus:border-[#1783ff] focus:ring-1 focus:ring-[#1783ff]/50"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-black/10 bg-black/5 px-4 py-2 text-sm text-[#000000e6] hover:bg-black/10"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#ffffff] hover:bg-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-gradient-to-r from-[#985ffb] to-[#a16bff] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/20 hover:from-[#935cf3] hover:to-[#905aee]"
+              className="rounded-xl bg-gradient-to-r from-[#1783ff] to-[#258eff] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/20 hover:from-[#258eff] hover:to-[#1a88ff]"
             >
               Save
             </button>
