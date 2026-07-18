@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ProjectList } from './components/ProjectList';
-import { Terminal, type TerminalHandle } from './components/Terminal';
+import { Terminal } from './components/Terminal';
 import { RightPanel } from './components/RightPanel';
-import { CommandInput } from './components/CommandInput';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import { EditProjectDialog } from './components/EditProjectDialog';
 import { Toast } from './components/Toast';
@@ -39,7 +38,6 @@ function App() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sessionStatuses, setSessionStatuses] = useState<Record<string, SessionStatus>>({});
-  const terminalRefs = useRef<Map<string, TerminalHandle>>(new Map());
   const startedTabsRef = useRef<Set<string>>(new Set());
 
   const setTabStatus = (tabId: string, status: SessionStatus) => {
@@ -156,13 +154,6 @@ function App() {
     }
   };
 
-  const handleCommandSubmit = (command: string) => {
-    if (!activeTabId) return;
-    const handle = terminalRefs.current.get(activeTabId);
-    handle?.sendCommand(command);
-    handle?.focus();
-  };
-
   const handleRefresh = async () => {
     try {
       await invoke('refresh_window');
@@ -266,7 +257,7 @@ function App() {
                 onClick={() => setActiveTabId(tab.id)}
                 className={`group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   tab.id === activeTabId
-                    ? 'bg-white/10 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-[#7c3aed]/40 to-[#4f46e5]/25 text-white shadow-lg shadow-purple-900/20'
                     : 'text-[#9c8fb8] hover:bg-white/5 hover:text-[#d4c8e8]'
                 }`}
               >
@@ -298,7 +289,7 @@ function App() {
         <div className="relative flex flex-1 flex-row overflow-hidden">
           {/* Center terminal */}
           <div className="flex flex-1 flex-col overflow-hidden p-3">
-            <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/5 bg-[#0d0a14] shadow-2xl">
+            <div className="relative flex-1 overflow-hidden rounded-2xl border border-purple-500/10 bg-[#0d0a14] shadow-2xl shadow-purple-900/10">
               {tabs.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-[#7d7196]">
                   <img
@@ -317,13 +308,6 @@ function App() {
                     }`}
                   >
                     <Terminal
-                      ref={(el) => {
-                        if (el) {
-                          terminalRefs.current.set(tab.id, el);
-                        } else {
-                          terminalRefs.current.delete(tab.id);
-                        }
-                      }}
                       project={tab.project}
                       sessionId={sessionIdForTab(tab)}
                       isActive={tab.id === activeTabId}
@@ -335,15 +319,6 @@ function App() {
                   </div>
                 ))
               )}
-            </div>
-
-            <div className="mt-3 h-14 shrink-0">
-              <CommandInput
-                onSubmit={handleCommandSubmit}
-                disabled={!activeProject}
-                placeholder={activeProject ? '输入命令发送到终端...' : '先选择一个项目'}
-                status={activeTabId ? sessionStatuses[activeTabId] ?? 'not-started' : 'none'}
-              />
             </div>
           </div>
 

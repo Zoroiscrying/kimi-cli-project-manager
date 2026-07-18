@@ -1,3 +1,4 @@
+import { open } from '@tauri-apps/plugin-shell';
 import type { Project, Session } from '../types';
 import type { SessionStatus } from './StatusDot';
 
@@ -163,6 +164,12 @@ export function RightPanel({
                 工具
               </h3>
               <div className="space-y-1.5">
+                <button
+                  onClick={() => project && open(project.path)}
+                  className="w-full rounded-xl border border-white/5 bg-[#151222] px-3 py-2 text-left text-xs text-[#b6aacf] hover:bg-[#1c1830]"
+                >
+                  打开文件夹
+                </button>
                 <button
                   onClick={() => project && navigator.clipboard.writeText(project.path)}
                   className="w-full rounded-xl border border-white/5 bg-[#151222] px-3 py-2 text-left text-xs text-[#b6aacf] hover:bg-[#1c1830]"
