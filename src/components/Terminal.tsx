@@ -42,7 +42,7 @@ function bufferShowsIdlePrompt(term: XTerm): boolean {
     const text = line.translateToString(true).trimEnd();
     if (text.length > 0) lines.push(text);
   }
-  return lines.some((line) => /^\s*[│┃|]?\s?>█?$/.test(line));
+  return lines.some((line) => /^\s*[│┃|]?\s*>[\s│┃|█]*$/.test(line));
 }
 
 // Kimi-inspired purple/blue terminal palette
