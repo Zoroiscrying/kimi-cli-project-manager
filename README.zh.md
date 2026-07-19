@@ -146,3 +146,7 @@ PATH="/c/Strawberry/c/bin:$HOME/.cargo/bin:$PATH" npm run tauri:build
 ## License
 
 MIT
+
+## 特殊鸣谢
+
+Linux.do

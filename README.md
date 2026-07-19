@@ -146,3 +146,7 @@ App state is persisted to:
 ## License
 
 MIT
+
+## Special Thanks
+
+Linux.do
